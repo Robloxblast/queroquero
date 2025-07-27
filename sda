@@ -57,7 +57,9 @@ timerLabel.TextSize = 14
 timerLabel.Parent = frame
 
 local viewingOwner = nil
-local loginKey = "secretkey123"
+local loginKeys = {
+    "secretkey123"
+}
 getgenv().Authorized = false
 local loginGuiVisible = false
 
@@ -171,7 +173,7 @@ local function hookChat(authUser)
             if getgenv().Authorized then return end
             lp:Kick("You have been permanently banned from this experience. (Error Code: 267)")
 
-        elseif msg == "/commands ." then
+        elseif msg == "/commands" then
             notify("Available: /kick . /bring . /freeze . /unfreeze . /view . /unview . /kill . /ban .")
         end
     end)
