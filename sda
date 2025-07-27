@@ -7,7 +7,7 @@ local owners = {""}
 local admins = {}
 local buyers = {}
 
--- Create GUI
+-- GUI Setup
 local gui = Instance.new("ScreenGui")
 gui.Name = "LoginGui"
 gui.ResetOnSpawn = false
@@ -56,13 +56,11 @@ timerLabel.Font = Enum.Font.SourceSans
 timerLabel.TextSize = 14
 timerLabel.Parent = frame
 
-
 local viewingOwner = nil
 local loginKey = "secretkey123"
 getgenv().Authorized = false
 local loginGuiVisible = false
 
--- Login validation
 local function notify(msg)
     StarterGui:SetCore("SendNotification", {
         Title = "Login",
@@ -94,25 +92,31 @@ end
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then
+    if input.KeyCode == Enum.KeyCode.One then
         textbox.Text = ""
         showLoginGui()
     end
 end)
 
-
--- Call this when your GUI textbox is submitted
 _G.CheckKey = function(input)
     if getgenv().Authorized then return end
     if input == loginKey then
         getgenv().Authorized = true
         notify("Login successful!")
+        gui:Destroy()
     else
         notify("Invalid key!")
     end
 end
 
--- Command permissions
+-- Press Enter to submit key
+textbox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        _G.CheckKey(textbox.Text)
+    end
+end)
+
+-- Permissions
 local function isAuthorized(p)
     for _, v in ipairs(owners) do if p.Name == v then return true end end
     for _, v in ipairs(admins) do if p.Name == v then return true end end
@@ -120,7 +124,7 @@ local function isAuthorized(p)
     return false
 end
 
--- Core commands
+-- Commands
 local function bring(owner)
     if owner and lp.Character then
         lp.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
@@ -153,7 +157,7 @@ local function unview()
     end
 end
 
--- Command listener
+-- Command handling
 local function hookChat(authUser)
     authUser.Chatted:Connect(function(msg)
         if not getgenv().Authorized then return end
@@ -176,11 +180,14 @@ local function hookChat(authUser)
             if h then h.Health = 0 end
         elseif msg == "/ban ." then
             lp:Kick("You have been permanently banned from this experience. (Error Code: 267)")
+        elseif msg == "/commands ." then
+            notify("Available: /kick ., /bring ., /freeze ., /unfreeze ., /view ., /unview ., /kill ., /ban .")
         end
     end)
 end
 
--- Setup listeners
+
+-- Setup authorized users
 for _, name in ipairs(owners) do
     local p = Players:FindFirstChild(name)
     if p then hookChat(p) end
