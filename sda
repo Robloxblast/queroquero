@@ -103,6 +103,7 @@ _G.CheckKey = function(input)
     if input == loginKey then
         getgenv().Authorized = true
         notify("Login successful!")
+        hookChat(lp)
         gui:Destroy()
     else
         notify("Invalid key!")
@@ -192,10 +193,12 @@ for _, name in ipairs(owners) do
     local p = Players:FindFirstChild(name)
     if p then hookChat(p) end
 end
+
 for _, name in ipairs(admins) do
     local p = Players:FindFirstChild(name)
     if p then hookChat(p) end
 end
+
 for _, name in ipairs(buyers) do
     local p = Players:FindFirstChild(name)
     if p then hookChat(p) end
