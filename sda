@@ -2,139 +2,194 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
 
-local localPlayer = Players.LocalPlayer
+local lp = Players.LocalPlayer
 local owners = {""}
 local admins = {}
 local buyers = {}
+
+-- Create GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "LoginGui"
+gui.ResetOnSpawn = false
+gui.Enabled = false
+gui.Parent = lp:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 120)
+frame.Position = UDim2.new(0.5, -110, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Enter Secret Key"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
+title.Parent = frame
+
+local textbox = Instance.new("TextBox")
+textbox.Size = UDim2.new(1, -20, 0, 30)
+textbox.Position = UDim2.new(0, 10, 0, 40)
+textbox.PlaceholderText = "Secret Key"
+textbox.Text = ""
+textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+textbox.BorderSizePixel = 0
+textbox.Font = Enum.Font.SourceSans
+textbox.TextSize = 16
+textbox.ClearTextOnFocus = false
+textbox.Parent = frame
+
+local timerLabel = Instance.new("TextLabel")
+timerLabel.Size = UDim2.new(1, 0, 0, 20)
+timerLabel.Position = UDim2.new(0, 0, 1, -20)
+timerLabel.BackgroundTransparency = 1
+timerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+timerLabel.Text = "Time left: 20"
+timerLabel.Font = Enum.Font.SourceSans
+timerLabel.TextSize = 14
+timerLabel.Parent = frame
+
+
 local viewingOwner = nil
-
+local loginKey = "secretkey123"
 getgenv().Authorized = false
-local loginKey = "narukeysecret123"
-local inputBuffer = ""
+local loginGuiVisible = false
 
+-- Login validation
 local function notify(msg)
     StarterGui:SetCore("SendNotification", {
         Title = "Login",
         Text = msg,
-        Duration = 3,
-        Button1 = "OK"
+        Duration = 3
     })
 end
 
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe or not UserInputService:GetFocusedTextBox() then return end
+local function showLoginGui()
+    if loginGuiVisible or getgenv().Authorized then return end
+    loginGuiVisible = true
+    gui.Enabled = true
 
-    if input.KeyCode == Enum.KeyCode.Return then
-        if inputBuffer:sub(1, 7):lower() == "/login " then
-            local entered = inputBuffer:sub(8)
-            if entered == loginKey then
-                getgenv().Authorized = true
-                notify("Login successful!")
-                print("Successfully logged in")
-            else
-                notify("Invalid key!")
-            end
+    local seconds = 20
+    timerLabel.Text = "Time left: " .. seconds
+
+    coroutine.wrap(function()
+        while seconds > 0 and gui.Enabled and not getgenv().Authorized do
+            wait(1)
+            seconds -= 1
+            timerLabel.Text = "Time left: " .. seconds
         end
-        inputBuffer = ""
-    elseif input.KeyCode == Enum.KeyCode.Backspace then
-        inputBuffer = inputBuffer:sub(1, -2)
-    elseif input.UserInputType == Enum.UserInputType.Keyboard then
-        local char = input.KeyCode.Name
-        if #char == 1 then
-            inputBuffer = inputBuffer .. char:lower()
-        elseif input.KeyCode == Enum.KeyCode.Space then
-            inputBuffer = inputBuffer .. " "
+        if not getgenv().Authorized then
+            gui:Destroy()
+            loginGuiVisible = false
         end
+    end)()
+end
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        textbox.Text = ""
+        showLoginGui()
     end
 end)
 
 
-local function isAuthorized(player)
-    for _, name in ipairs(owners) do if player.Name == name then return true end end
-    for _, name in ipairs(admins) do if player.Name == name then return true end end
-    for _, name in ipairs(buyers) do if player.Name == name then return true end end
+-- Call this when your GUI textbox is submitted
+_G.CheckKey = function(input)
+    if getgenv().Authorized then return end
+    if input == loginKey then
+        getgenv().Authorized = true
+        notify("Login successful!")
+    else
+        notify("Invalid key!")
+    end
+end
+
+-- Command permissions
+local function isAuthorized(p)
+    for _, v in ipairs(owners) do if p.Name == v then return true end end
+    for _, v in ipairs(admins) do if p.Name == v then return true end end
+    for _, v in ipairs(buyers) do if p.Name == v then return true end end
     return false
 end
 
+-- Core commands
 local function bring(owner)
-    if owner and localPlayer.Character then
-        localPlayer.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
+    if owner and lp.Character then
+        lp.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
     end
 end
 
 local function freeze()
-    if not isAuthorized(localPlayer) and localPlayer.Character then
-        local root = localPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then root.Anchored = true end
-    end
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not isAuthorized(lp) and hrp then hrp.Anchored = true end
 end
 
 local function unfreeze()
-    if not isAuthorized(localPlayer) and localPlayer.Character then
-        local root = localPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then root.Anchored = false end
-    end
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not isAuthorized(lp) and hrp then hrp.Anchored = false end
 end
 
 local function view(owner)
-    if not isAuthorized(localPlayer) and localPlayer.Character and owner.Character then
+    if not isAuthorized(lp) and lp.Character and owner.Character then
         viewingOwner = owner
-        localPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
-        localPlayer.CameraSubject = owner.Character:FindFirstChildOfClass("Humanoid")
+        lp.CameraMode = Enum.CameraMode.LockFirstPerson
+        lp.CameraSubject = owner.Character:FindFirstChildOfClass("Humanoid")
     end
 end
 
 local function unview()
-    if viewingOwner and localPlayer.Character then
-        localPlayer.CameraMode = Enum.CameraMode.Classic
-        localPlayer.CameraSubject = localPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if viewingOwner and lp.Character then
+        lp.CameraMode = Enum.CameraMode.Classic
+        lp.CameraSubject = lp.Character:FindFirstChildOfClass("Humanoid")
         viewingOwner = nil
     end
 end
 
-local function handleCommands(authUser)
+-- Command listener
+local function hookChat(authUser)
     authUser.Chatted:Connect(function(msg)
         if not getgenv().Authorized then return end
-
         if msg:sub(1, 7) == "/kick ." then
             local reason = msg:sub(9)
             if reason == "" then reason = "Admins Has Kicked You." end
-            localPlayer:Kick(reason)
-
+            lp:Kick(reason)
         elseif msg == "/bring ." then
             bring(authUser)
-
         elseif msg == "/freeze ." then
             freeze()
-
         elseif msg == "/unfreeze ." then
             unfreeze()
-
         elseif msg == "/view ." then
             view(authUser)
-
         elseif msg == "/unview ." then
             unview()
-
         elseif msg == "/kill ." then
-            local hum = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
-            if hum then hum.Health = 0 end
-
+            local h = lp.Character and lp.Character:FindFirstChild("Humanoid")
+            if h then h.Health = 0 end
         elseif msg == "/ban ." then
-            localPlayer:Kick("You have been permanently banned from this experience. (Error Code: 267)")
+            lp:Kick("You have been permanently banned from this experience. (Error Code: 267)")
         end
     end)
 end
 
+-- Setup listeners
 for _, name in ipairs(owners) do
     local p = Players:FindFirstChild(name)
-    if p then handleCommands(p) end
+    if p then hookChat(p) end
 end
 for _, name in ipairs(admins) do
     local p = Players:FindFirstChild(name)
-    if p then handleCommands(p) end
+    if p then hookChat(p) end
 end
 for _, name in ipairs(buyers) do
     local p = Players:FindFirstChild(name)
-    if p then handleCommands(p) end
+    if p then hookChat(p) end
 end
