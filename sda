@@ -58,7 +58,8 @@ timerLabel.Parent = frame
 
 local viewingOwner = nil
 local loginKeys = {
-    "secretkey123"
+    "secretkey123",
+    "Owners1"
 }
 getgenv().Authorized = false
 local loginGuiVisible = false
