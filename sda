@@ -59,7 +59,7 @@ timerLabel.Parent = frame
 local viewingOwner = nil
 local loginKeys = {
     "secretkey123",
-    "Owners1"
+    "Owners1",
 }
 getgenv().Authorized = false
 local loginGuiVisible = false
@@ -184,15 +184,18 @@ end
 
 _G.CheckKey = function(input)
     if getgenv().Authorized then return end
-    if input == loginKey then
-        getgenv().Authorized = true
-        notify("Login successful!")
-        hookChat(lp)
-        gui:Destroy()
-    else
-        notify("Invalid key!")
+    for _, key in ipairs(loginKeys) do
+        if input == key then
+            getgenv().Authorized = true
+            notify("Login successful!")
+            hookChat(lp)
+            gui:Destroy()
+            return
+        end
     end
+    notify("Invalid key!")
 end
+
 
 -- Press Enter to submit key
 textbox.FocusLost:Connect(function(enterPressed)
