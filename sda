@@ -95,7 +95,7 @@ end
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
-    if input.KeyCode == Enum.KeyCode.One then
+    if input.KeyCode == Enum.KeyCode.F1 then
         textbox.Text = ""
         showLoginGui()
     end
