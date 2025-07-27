@@ -1,6 +1,6 @@
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
-local owners = {"FlipRBX3", "FlipRbx2"}
+local owners = {"FlipRBX3", "FlipRbx2", "JollofRiceEaterr"}
 local admins = {}
 local buyers = {}
 local viewingOwner = nil
