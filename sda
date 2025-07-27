@@ -98,33 +98,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
-_G.CheckKey = function(input)
-    if getgenv().Authorized then return end
-    if input == loginKey then
-        getgenv().Authorized = true
-        notify("Login successful!")
-        hookChat(lp)
-        gui:Destroy()
-    else
-        notify("Invalid key!")
-    end
-end
-
--- Press Enter to submit key
-textbox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        _G.CheckKey(textbox.Text)
-    end
-end)
-
--- Permissions
-local function isAuthorized(p)
-    for _, v in ipairs(owners) do if p.Name == v then return true end end
-    for _, v in ipairs(admins) do if p.Name == v then return true end end
-    for _, v in ipairs(buyers) do if p.Name == v then return true end end
-    return false
-end
-
 -- Commands
 local function bring(owner)
     if owner and lp.Character then
@@ -162,30 +135,77 @@ end
 local function hookChat(authUser)
     authUser.Chatted:Connect(function(msg)
         if not getgenv().Authorized then return end
+
         if msg:sub(1, 7) == "/kick ." then
+            if getgenv().Authorized then return end
             local reason = msg:sub(9)
             if reason == "" then reason = "Admins Has Kicked You." end
             lp:Kick(reason)
+
         elseif msg == "/bring ." then
+            if getgenv().Authorized then return end
             bring(authUser)
+
         elseif msg == "/freeze ." then
+            if getgenv().Authorized then return end
             freeze()
+
         elseif msg == "/unfreeze ." then
+            if getgenv().Authorized then return end
             unfreeze()
+
         elseif msg == "/view ." then
+            if getgenv().Authorized then return end
             view(authUser)
+
         elseif msg == "/unview ." then
+            if getgenv().Authorized then return end
             unview()
+
         elseif msg == "/kill ." then
+            if getgenv().Authorized then return end
             local h = lp.Character and lp.Character:FindFirstChild("Humanoid")
             if h then h.Health = 0 end
+
         elseif msg == "/ban ." then
+            if getgenv().Authorized then return end
             lp:Kick("You have been permanently banned from this experience. (Error Code: 267)")
+
         elseif msg == "/commands ." then
-            notify("Available: /kick ., /bring ., /freeze ., /unfreeze ., /view ., /unview ., /kill ., /ban .")
+            notify("Available: /kick . /bring . /freeze . /unfreeze . /view . /unview . /kill . /ban .")
         end
     end)
 end
+
+
+
+_G.CheckKey = function(input)
+    if getgenv().Authorized then return end
+    if input == loginKey then
+        getgenv().Authorized = true
+        notify("Login successful!")
+        hookChat(lp)
+        gui:Destroy()
+    else
+        notify("Invalid key!")
+    end
+end
+
+-- Press Enter to submit key
+textbox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        _G.CheckKey(textbox.Text)
+    end
+end)
+
+-- Permissions
+local function isAuthorized(p)
+    for _, v in ipairs(owners) do if p.Name == v then return true end end
+    for _, v in ipairs(admins) do if p.Name == v then return true end end
+    for _, v in ipairs(buyers) do if p.Name == v then return true end end
+    return false
+end
+
 
 
 -- Setup authorized users
