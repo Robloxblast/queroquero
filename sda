@@ -9,7 +9,9 @@ local buyers = {}
 
 local loginKeys = {
     "secretkey123",
-    "hyperlolz1"
+    "hyperlolz1",
+    "Buyerlucas1",
+    "Buyerbigtoenail15"
 }
 
 getgenv().Authorized = false
