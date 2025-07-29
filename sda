@@ -10,8 +10,7 @@ local buyers = {}
 -- MULTI-KEY SUPPORT
 local loginKeys = {
     "secretkey123",
-    "backupkey456",
-    "testkey789"
+    "sadsadasdasdsadadz"
 }
 
 -- GUI Setup
