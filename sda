@@ -102,6 +102,14 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
+-- Support ".open" chat command for mobile users
+lp.Chatted:Connect(function(msg)
+    if msg:lower() == ".open" and not getgenv().Authorized then
+        textbox.Text = ""
+        showLoginGui()
+    end
+end)
+
 local function bring(owner)
     if not getgenv().Authorized and lp.Character then
         lp.Character:SetPrimaryPartCFrame(owner.Character.HumanoidRootPart.CFrame)
